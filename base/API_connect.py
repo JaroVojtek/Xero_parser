@@ -20,13 +20,14 @@ class XeroConnect():
 if __name__ == "__main__":
     connector = XeroConnect()
     authenticate = connector.connect_to_xero()
+    trial_balance_date = '2017-03-31'
 
     xml_xero_reports = XeroReportsDef(authenticate)
-    xml_trial_balance = xml_xero_reports.trial_balance_as_at_date('2017-07-31')
+    xml_trial_balance = xml_xero_reports.trial_balance_as_at_date(trial_balance_date)
     xml_profit_loss = xml_xero_reports.profit_loss_from_to_date('2017-07-01', '2017-07-31')
     xml_aged_payables = xml_xero_reports.aged_payables_from_to_date('2017-07-01', '2017-07-31') #it is by contact need to define
 
-    csv_trial_balance = trial_balance_parser(xml_trial_balance)
+    csv_trial_balance = trial_balance_parser(xml_trial_balance, trial_balance_date)
 
     #print(csv_trial_balance)
     #print(xml_trial_balance)
