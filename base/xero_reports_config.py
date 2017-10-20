@@ -20,10 +20,15 @@ class XeroReportsDef():
         date_range = {'fromDate': fromDate, 'toDate': toDate}
         return self.xero_get_request(api_url,date_range)
 
-    def aged_payables_from_to_date(self, fromDate, toDate):
-        api_url = 'https://api.xero.com/api.xro/2.0/Reports/AgedPayablesByContact'
+    def aged_payables_from_to_date(self, fromDate, toDate, contactID):
+        api_url = 'https://api.xero.com/api.xro/2.0/Reports/AgedPayablesByContact?ContactID='+contactID
         date_range = {'fromDate': fromDate, 'toDate': toDate}
         return self.xero_get_request(api_url,date_range)
+
+    def contact_ids(self):
+        api_url = 'https://api.xero.com/api.xro/2.0/Contacts'
+        contacts = requests.get(url=api_url, auth=self.authenticate.oauth)
+        return contacts.text
 
 
 

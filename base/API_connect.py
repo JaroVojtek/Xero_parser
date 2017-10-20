@@ -1,6 +1,6 @@
 from xero.auth import PrivateCredentials
 from base.xero_reports_config import XeroReportsDef
-from base.xero_reports_parsers import trial_balance_parser
+from base.xero_parser import XeroParser
 
 class XeroConnect():
 
@@ -23,11 +23,21 @@ if __name__ == "__main__":
     trial_balance_date = '2017-03-31'
 
     xml_xero_reports = XeroReportsDef(authenticate)
+
+    xml_contact_ids = xml_xero_reports.contact_ids()
     xml_trial_balance = xml_xero_reports.trial_balance_as_at_date(trial_balance_date)
     xml_profit_loss = xml_xero_reports.profit_loss_from_to_date('2017-07-01', '2017-07-31')
-    xml_aged_payables = xml_xero_reports.aged_payables_from_to_date('2017-07-01', '2017-07-31') #it is by contact need to define
+    xml_aged_payables = xml_xero_reports.aged_payables_from_to_date('2017-03-01', '2017-03-31', '56c5b4e5-c9a4-4b17-8823-5411bb668766')
 
-    csv_trial_balance = trial_balance_parser(xml_trial_balance, trial_balance_date)
+    trial_balance = XeroParser(xml_trial_balance, trial_balance_date)
+    csv_trial_balance = trial_balance.trial_balance_to_csv()
 
-    #print(csv_trial_balance)
-    #print(xml_trial_balance)
+    contact_ids = XeroParser(xml_contact_ids)
+    contact_ids_list = contact_ids.list_of_contact_ids()
+
+    aged_payables = XeroParser(xml_aged_payables)
+    csv_aged_payables = aged_payables.aged_payables_byContact_to_csv()
+
+    #print(contact_ids_list)
+    print(xml_aged_payables)
+    #print(xml_contact_ids)

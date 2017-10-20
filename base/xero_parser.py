@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 
 class XeroParser():
 
-    def __init__(self,xml_content, date_range):
+    def __init__(self,xml_content, date_range=None):
         self.xml_content = xml_content
         self.date_range = date_range
 
@@ -11,7 +11,14 @@ class XeroParser():
         root = ET.fromstring(self.xml_content)
         return root
 
-    def parse_xml_to_csv(self):
+    def list_of_contact_ids(self):
+        root = self.parse_xml()
+        contactIDs = []
+        for child in root[4].iter('ContactID'):
+            contactIDs.append(child.text)
+        return contactIDs
+
+    def trial_balance_to_csv(self):
         root = self.parse_xml()
         report_name = "Masedi Electric Serve - Trial Balance_"+self.date_range
         trial_balance_csv = open(report_name+".csv", 'w')
@@ -48,3 +55,18 @@ class XeroParser():
         writer.writerow(trial_balance_total)
 
         trial_balance_csv.close()
+
+    def aged_payables_byContact_to_csv(self):
+        root = self.parse_xml()
+        report_name = "Masedi Electric Serve - Aged_Payables_by_Contact"
+        aged_payables_csv = open(report_name+".csv", 'w')
+        writer = csv.writer(aged_payables_csv, lineterminator='\n')
+
+        writer.writerow([report_name])
+        #for child in root[4][0][6][2][1][2][1][7]:
+        #    value_at_month = child.text
+
+        aged_payables_csv.close()
+
+
+
