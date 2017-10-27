@@ -80,10 +80,12 @@ class XeroParser():
         for child in root[4][0][6]:
             row_number.append(child.tag)
         try:
-            sumary_first_number = float(root[4][0][6][len(row_number)-1][1][0][1][4][0].text)
-            sumary_second_number = float(root[4][0][6][len(row_number)-1][1][0][1][5][0].text)
-            sumarry_aged_payables = round(sumary_first_number-sumary_second_number,2)
-            writer.writerow([contact_name, sumarry_aged_payables])
+            #sumary_first_number = float(root[4][0][6][len(row_number)-1][1][0][1][4][0].text)
+            #sumary_second_number = float(root[4][0][6][len(row_number)-1][1][0][1][5][0].text)
+            #sumarry_aged_payables = round(sumary_first_number-sumary_second_number,2)
+            closing_balance = float(root[4][0][6][len(row_number)-1][1][0][1][7][0].text)
+            #writer.writerow([contact_name, sumarry_aged_payables])
+            writer.writerow([contact_name,closing_balance])
         except:
             writer.writerow([contact_name,0.00])
         aged_payables_csv.close()
