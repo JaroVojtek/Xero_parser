@@ -3,24 +3,23 @@ import xml.etree.ElementTree as ET
 
 class XeroParser():
 
-    def __init__(self, xml_content=None, date_range=None):
-        self.xml_content = xml_content
-        self.date_range = date_range
+    def __init__(self, toDate=None):
+        self.toDate = toDate
 
-    def parse_xml(self):
-        root = ET.fromstring(self.xml_content)
+    def parse_xml(self,  xml_content):
+        root = ET.fromstring(xml_content)
         return root
 
-    def list_of_contact_ids(self):
-        root = self.parse_xml()
+    def list_of_contact_ids(self, xml_content):
+        root = self.parse_xml(xml_content)
         contactIDs = []
         for child in root[4].iter('ContactID'):
             contactIDs.append(child.text)
         return contactIDs
 
-    def trial_balance_to_csv(self):
-        root = self.parse_xml()
-        report_name = "Masedi Electric Serve - Trial Balance_"+self.date_range
+    def trial_balance_to_csv(self, xml_content):
+        root = self.parse_xml(xml_content)
+        report_name = "Masedi Electric Serve - Trial Balance_"+self.toDate
         trial_balance_csv = open(report_name+".csv", 'w')
         writer = csv.writer(trial_balance_csv, lineterminator='\n')
 
@@ -56,43 +55,75 @@ class XeroParser():
 
         trial_balance_csv.close()
 
-    def aged_payables_byContact_header(self):
-        report_name = "Masedi Electric Serve - Aged_Payables_by_Contact"
+    def aged_payables_to_csv(self,filtered_invoices):
+
+        aged_payables_dict = {}
+
+        for f in filtered_invoices:
+            if f['Type'] == "ACCPAY" and not f['Contact']['Name'] in aged_payables_dict:
+                aged_payables_dict[f['Contact']['Name']] = f['AmountDue']
+            elif f['Type'] == "ACCPAY" and f['Contact']['Name'] in aged_payables_dict:
+                aged_payables_dict[f['Contact']['Name']] = round(aged_payables_dict[f['Contact']['Name']] + f['AmountDue'],2)
+
+        report_name = "Masedi Electric Serve - Aged_Payables_"+self.toDate
         aged_payables_csv = open(report_name + ".csv", 'w')
         writer = csv.writer(aged_payables_csv, lineterminator='\n')
 
         writer.writerow([report_name])
-        writer.writerow("\n")
-        writer.writerow(["Payables", "March"])
+        writer.writerow(["",self.toDate])
 
+        for key, value in aged_payables_dict.items():
+            writer.writerow([key, value])
 
         aged_payables_csv.close()
 
-    def aged_payables_byContact_to_csv(self):
-        root = self.parse_xml()
-        report_name = "Masedi Electric Serve - Aged_Payables_by_Contact"
-        aged_payables_csv = open(report_name + ".csv", 'a')
-        writer = csv.writer(aged_payables_csv, lineterminator='\n')
+    def expences_by_contact_to_csv(self, filtered_invoices):
 
-        contact_name = root[4][0][3][1].text
+        expences_dict = {}
 
-        row_number = []
-        for child in root[4][0][6]:
-            row_number.append(child.tag)
-        try:
-            #sumary_first_number = float(root[4][0][6][len(row_number)-1][1][0][1][4][0].text)
-            #sumary_second_number = float(root[4][0][6][len(row_number)-1][1][0][1][5][0].text)
-            #sumarry_aged_payables = round(sumary_first_number-sumary_second_number,2)
-            closing_balance = float(root[4][0][6][len(row_number)-1][1][0][1][7][0].text)
-            #writer.writerow([contact_name, sumarry_aged_payables])
-            writer.writerow([contact_name,closing_balance])
-        except:
-            writer.writerow([contact_name,0.00])
-        aged_payables_csv.close()
+        for f in filtered_invoices:
+            if f['Type'] == "ACCPAY" and not f['Contact']['Name'] in expences_dict:
+                expences_dict[f['Contact']['Name']] = f['SubTotal']
+            elif f['Type'] == "ACCPAY" and f['Contact']['Name'] in expences_dict:
+                expences_dict[f['Contact']['Name']] = round(expences_dict[f['Contact']['Name']] + f['SubTotal'],2)
 
-    def profit_and_loss_to_csv(self):
-        root = self.parse_xml()
-        report_name = "Masedi Electric Serve - Profit  Loss"
+        report_name = "Masedi Electric Serve - Expences by Contact_" + self.toDate
+        expences_by_contact_csv = open(report_name + ".csv", 'w')
+        writer = csv.writer(expences_by_contact_csv, lineterminator='\n')
+
+        writer.writerow([report_name])
+        writer.writerow(["", self.toDate])
+
+        for key, value in expences_dict.items():
+            writer.writerow([key, value])
+
+        expences_by_contact_csv.close()
+
+    def income_by_contact_to_csv(self, filtered_invoices):
+
+        income_dic = {}
+
+        for f in filtered_invoices:
+            if f['Type'] == "ACCREC" and not f['Contact']['Name'] in income_dic:
+                income_dic[f['Contact']['Name']] = f['SubTotal']
+            elif f['Type'] == "ACCREC" and f['Contact']['Name'] in income_dic:
+                income_dic[f['Contact']['Name']] = round(income_dic[f['Contact']['Name']] + f['SubTotal'],2)
+
+        report_name = "Masedi Electric Serve - Income by Contact_" + self.toDate
+        income_by_contact_csv = open(report_name + ".csv", 'w')
+        writer = csv.writer(income_by_contact_csv, lineterminator='\n')
+
+        writer.writerow([report_name])
+        writer.writerow(["", self.toDate])
+
+        for key, value in income_dic.items():
+            writer.writerow([key, value])
+
+        income_by_contact_csv.close()
+
+    def profit_and_loss_to_csv(self, xml_content):
+        root = self.parse_xml(xml_content)
+        report_name = "Masedi Electric Serve - Profit  Loss_"+self.toDate
         profit_and_loss_csv = open(report_name+".csv","w")
         writer = csv.writer(profit_and_loss_csv, lineterminator="\n")
 
@@ -137,6 +168,53 @@ class XeroParser():
                     writer.writerow(profit_and_loss_item)
 
         profit_and_loss_csv.close()
+
+    def aged_receivables_to_csv(self, filtered_invoices):
+
+        aged_receivables_dict = {}
+
+        for f in filtered_invoices:
+            if f['Type'] == "ACCREC" and not f['Contact']['Name'] in aged_receivables_dict:
+                aged_receivables_dict[f['Contact']['Name']] = f['AmountDue']
+            elif f['Type'] == "ACCREC" and f['Contact']['Name'] in aged_receivables_dict:
+                aged_receivables_dict[f['Contact']['Name']] = round(aged_receivables_dict[f['Contact']['Name']] + f['AmountDue'],2)
+
+        report_name = "Masedi Electric Serve - Aged_Receivables_"+self.toDate
+        aged_receivables_csv = open(report_name + ".csv", 'w')
+        writer = csv.writer(aged_receivables_csv, lineterminator='\n')
+
+        writer.writerow([report_name])
+        writer.writerow(["",self.toDate])
+
+        for key, value in aged_receivables_dict.items():
+            writer.writerow([key, value])
+
+        aged_receivables_csv.close()
+
+        """
+        root = self.parse_xml()
+        report_name = "Masedi Electric Serve - Aged_Receivables_by_Contact"
+        aged_receivables_csv = open(report_name + ".csv", 'a')
+        writer = csv.writer(aged_receivables_csv, lineterminator='\n')
+
+        contact_name = root[4][0][3][1].text
+
+        row_number = []
+        for child in root[4][0][6]:
+            row_number.append(child.tag)
+        try:
+            sumary_first_number = float(root[4][0][6][len(row_number)-1][1][0][1][4][0].text)
+            sumary_second_number = float(root[4][0][6][len(row_number)-1][1][0][1][5][0].text)
+            sumarry_aged_payables = round(sumary_first_number-sumary_second_number,2)
+            #closing_balance = float(root[4][0][6][len(row_number)-1][1][0][1][7][0].text)
+            writer.writerow([contact_name, sumarry_aged_payables])
+            #writer.writerow([contact_name,sumary_first_number])
+            #writer.writerow([contact_name,closing_balance])
+        except:
+            #writer.writerow([contact_name,0.00])
+            pass
+        aged_receivables_csv.close()
+        """
 
 
 

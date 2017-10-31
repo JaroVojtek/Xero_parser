@@ -6,7 +6,7 @@ class XeroReportsDef():
     def __init__(self, authenticate):
         self.authenticate = authenticate
 
-    def xero_get_request(self,api_url, date_range):
+    def xero_get_request(self,api_url, date_range=None):
         content = requests.get(url=api_url, auth=self.authenticate.oauth, params=date_range)
         return content.text
 
@@ -29,6 +29,16 @@ class XeroReportsDef():
         api_url = 'https://api.xero.com/api.xro/2.0/Contacts'
         contacts = requests.get(url=api_url, auth=self.authenticate.oauth)
         return contacts.text
+
+    def aged_receivables_from_to_date(self, fromDate, toDate, contactID):
+        api_url = 'https://api.xero.com/api.xro/2.0/Reports/AgedReceivablesByContact?ContactID='+contactID
+        date_range = {'fromDate': fromDate, 'toDate': toDate}
+        return self.xero_get_request(api_url, date_range)
+
+    def get_invoices(self,contactID):
+        api_url = "https://api.xero.com/api.xro/2.0/Invoices/"
+        return self.xero_get_request(api_url)
+
 
 
 
