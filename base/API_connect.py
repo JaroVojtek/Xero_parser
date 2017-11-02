@@ -41,12 +41,24 @@ if __name__ == "__main__":
 
     raw_string = 'Date >= DateTime({0}, {1}, 1) && Date < DateTime({0}, {1}, {2})'.format(str(current_year),reporting_month, str(last_day_in_month[1]))
     filtered_invoices = xero.invoices.filter(raw=raw_string)
+    #filtered_invoices = xero.invoices.filter(Contact_ContactID='d8831e4f-3f06-4a39-b230-54182a942e9f',raw=raw_string)
+
+    filtered_bank_transactions = xero.banktransactions.filter(raw=raw_string)
+
+    filtered_bank_transfers = xero.banktransfers.filter(raw=raw_string)
+    #for b in filtered_bank_transfers:
+    #    print(b)
+
+    filtered_payments = xero.payments.filter(raw=raw_string)
+    #for b in filtered_payments:
+    #    print(b)
 
     report_gen = XeroParser(toDate=toDate)
     report_gen.aged_receivables_to_csv(filtered_invoices)
     report_gen.aged_payables_to_csv(filtered_invoices)
     report_gen.expences_by_contact_to_csv(filtered_invoices)
     report_gen.income_by_contact_to_csv(filtered_invoices)
+    report_gen.account_transactions(fromDate, filtered_bank_transactions)
 
     xml_xero_reports = XeroReportsDef(authenticate)
 

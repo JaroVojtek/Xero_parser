@@ -63,7 +63,8 @@ class XeroParser():
             if f['Type'] == "ACCPAY" and not f['Contact']['Name'] in aged_payables_dict:
                 aged_payables_dict[f['Contact']['Name']] = f['AmountDue']
             elif f['Type'] == "ACCPAY" and f['Contact']['Name'] in aged_payables_dict:
-                aged_payables_dict[f['Contact']['Name']] = round(aged_payables_dict[f['Contact']['Name']] + f['AmountDue'],2)
+                aged_payables_dict[f['Contact']['Name']] = round(aged_payables_dict[f['Contact']['Name']] +
+                                                                 f['AmountDue'],2)
 
         report_name = "Masedi Electric Serve - Aged_Payables_"+self.toDate
         aged_payables_csv = open(report_name + ".csv", 'w')
@@ -215,6 +216,50 @@ class XeroParser():
             pass
         aged_receivables_csv.close()
         """
+
+    def account_transactions(self, fromDate, filtered_bank_transactions):
+
+        report_name = "Masedi Electric Serve - Account_Transactions_"+self.toDate
+        account_transactions_csv = open(report_name + ".csv", 'w')
+        writer = csv.writer(account_transactions_csv, lineterminator='\n')
+
+        writer.writerow([report_name])
+        reporting_period = "For the period {0} to {1}".format(fromDate,self.toDate)
+        writer.writerow([reporting_period])
+        writer.writerow("\n")
+        writer.writerow(["Date","Source","Description","Reference","Debit","Credit"])
+        writer.writerow("\n")
+
+        account_transactions_dict = {}
+
+        for f in filtered_bank_transactions:
+            if not f['BankAccount']['Name'] in account_transactions_dict:
+                account_transactions_dict[f['BankAccount']['Name']] = []
+            else:
+                date_string = f['DateString']
+                source = f['Type']
+                try:
+                    description = f['Contact']['Name']
+                except:
+                    description = ""
+                try:
+                    reference = f['Reference']
+                except:
+                    reference = ""
+                if source == "RECEIVE" or source == "RECEIVE-TRANSFER":
+                    debit = f['Total']
+                    credit = 0
+                else:
+                    debit = 0
+                    credit = f['Total']
+                account_transactions_row=[date_string, source, description, reference,debit,credit]
+                account_transactions_dict[f['BankAccount']['Name']].append(account_transactions_row)
+
+        for a in account_transactions_dict["FNB Bank"]:
+            print(a)
+
+        account_transactions_csv.close()
+
 
 
 
