@@ -217,7 +217,7 @@ class XeroParser():
         aged_receivables_csv.close()
         """
 
-    def account_transactions(self, fromDate, filtered_bank_transactions):
+    def account_transactions(self, fromDate, filtered_bank_transactions, filtered_payments):
 
         report_name = "Masedi Electric Serve - Account_Transactions_"+self.toDate
         account_transactions_csv = open(report_name + ".csv", 'w')
@@ -230,34 +230,73 @@ class XeroParser():
         writer.writerow(["Date","Source","Description","Reference","Debit","Credit"])
         writer.writerow("\n")
 
+        account_ids_dict = {}
+
+        for f in filtered_bank_transactions:
+            if not f['BankAccount']['AccountID'] in account_ids_dict:
+                account_ids_dict[f['BankAccount']['AccountID']] = f['BankAccount']['Name']
+
         account_transactions_dict = {}
 
         for f in filtered_bank_transactions:
             if not f['BankAccount']['Name'] in account_transactions_dict:
                 account_transactions_dict[f['BankAccount']['Name']] = []
+
+            date_string = f['Date']
+            source = f['Type']
+            try:
+                description = f['Contact']['Name']
+            except:
+                description = ""
+            try:
+                reference = f['Reference']
+            except:
+                reference = ""
+            if source == "RECEIVE" or source == "RECEIVE-TRANSFER":
+                debit = f['Total']
+                credit = 0
             else:
-                date_string = f['DateString']
-                source = f['Type']
-                try:
-                    description = f['Contact']['Name']
-                except:
-                    description = ""
-                try:
-                    reference = f['Reference']
-                except:
-                    reference = ""
-                if source == "RECEIVE" or source == "RECEIVE-TRANSFER":
-                    debit = f['Total']
-                    credit = 0
-                else:
-                    debit = 0
-                    credit = f['Total']
-                account_transactions_row=[date_string, source, description, reference,debit,credit]
-                account_transactions_dict[f['BankAccount']['Name']].append(account_transactions_row)
+                debit = 0
+                credit = f['Total']
+            account_transactions_row = [date_string, source, description, reference, debit, credit]
+            account_transactions_dict[f['BankAccount']['Name']].append(account_transactions_row)
 
-        for a in account_transactions_dict["FNB Bank"]:
-            print(a)
+        account_payments_dict = {}
 
+        for f in filtered_payments:
+
+            if not account_ids_dict[f['Account']['AccountID']] in account_payments_dict:
+                account_payments_dict[account_ids_dict[f['Account']['AccountID']]] = []
+
+            date_string = f['Date']
+            source = f['PaymentType']
+            try:
+                description = "Payment: " + f['Invoice']['Contact']['Name']
+            except:
+                description = ""
+            try:
+                reference = f['Invoice']['InvoiceNumber']
+            except:
+                reference = ""
+            if source == "ACCRECPAYMENT":
+                debit = f['BankAmount']
+                credit = 0
+            else:
+                debit = 0
+                credit = f['BankAmount']
+            account_payments_row = [date_string, source, description, reference, debit, credit]
+            account_payments_dict[account_ids_dict[f['Account']['AccountID']]].append(account_payments_row)
+
+        for bank_account in account_transactions_dict.keys():
+            writer.writerow([bank_account])
+            for transactions in account_transactions_dict[bank_account]:
+                writer.writerow(transactions)
+            try:
+                for payments in account_payments_dict[bank_account]:
+                    writer.writerow(payments)
+            except:
+                pass
+            writer.writerow("\n")
         account_transactions_csv.close()
 
 

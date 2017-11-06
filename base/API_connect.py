@@ -44,6 +44,8 @@ if __name__ == "__main__":
     #filtered_invoices = xero.invoices.filter(Contact_ContactID='d8831e4f-3f06-4a39-b230-54182a942e9f',raw=raw_string)
 
     filtered_bank_transactions = xero.banktransactions.filter(raw=raw_string)
+    #for b in filtered_bank_transactions:
+    #    print(b)
 
     filtered_bank_transfers = xero.banktransfers.filter(raw=raw_string)
     #for b in filtered_bank_transfers:
@@ -58,7 +60,7 @@ if __name__ == "__main__":
     report_gen.aged_payables_to_csv(filtered_invoices)
     report_gen.expences_by_contact_to_csv(filtered_invoices)
     report_gen.income_by_contact_to_csv(filtered_invoices)
-    report_gen.account_transactions(fromDate, filtered_bank_transactions)
+    report_gen.account_transactions(fromDate, filtered_bank_transactions,filtered_payments)
 
     xml_xero_reports = XeroReportsDef(authenticate)
 
