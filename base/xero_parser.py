@@ -1,5 +1,6 @@
 import csv
 import xml.etree.ElementTree as ET
+from datetime import datetime
 
 class XeroParser():
 
@@ -16,6 +17,127 @@ class XeroParser():
         for child in root[4].iter('ContactID'):
             contactIDs.append(child.text)
         return contactIDs
+
+    def invoices_csv_troubleshoot(self, xml_content):
+        root = self.parse_xml(xml_content)
+        report_name = "Masedi Electric Serve - All invoices"
+        all_invoices_csv = open(report_name+'.csv', 'w')
+        writer = csv.writer(all_invoices_csv, lineterminator = '\n', delimiter ='|')
+
+        writer.writerow([report_name])
+        writer.writerow("\n")
+        writer.writerow(['Contact ID','Contact Name', 'Invoice Number', 'Reference', 'Date', 'Status',
+                         'Type', 'SubTotal', 'TotalTax', 'Total', 'Amount Due', 'Amount Credited',
+                         'AmountPaid'])
+
+        invoices = len(root.findall(".//Invoice"))
+        for invoice in range(invoices):
+            contact_id, contact_name, invoice_date, subtotal, totaltax, total = ["" for i in range(6)]
+            payment_type, status, amount_paid, amount_credited, amount_due = ["" for i in range(5)]
+            invoice_number, reference = ["" for i in range(2)]
+            for child in root[4][invoice].iter():
+                    if child.tag == 'ContactID':
+                        contact_id = child.text
+                    elif child.tag == 'Name':
+                        contact_name = child.text
+                    elif child.tag == 'Date':
+                        timestamp = datetime.strptime(child.text, '%Y-%m-%dT%H:%M:%S')
+                        if datetime(2017, 1, 1) < timestamp < datetime(2017, 10, 31):
+                            invoice_date = child.text
+                        else:
+                            continue
+                    elif child.tag == 'SubTotal':
+                        subtotal = child.text
+                    elif child.tag == 'TotalTax':
+                        totaltax = child.text
+                    elif child.tag == 'Total':
+                        total = child.text
+                    elif child.tag == 'Type':
+                        payment_type = child.text
+                    elif child.tag == 'Status':
+                        status = child.text
+                    elif child.tag == 'AmountDue':
+                        amount_due = child.text
+                    elif child.tag == 'AmountCredited':
+                        amount_credited = child.text
+                    elif child.tag == 'AmountPaid':
+                        amount_paid = child.text
+                    elif child.tag == 'InvoiceNumber':
+                        invoice_number = child.text
+                    elif child.tag == 'Reference':
+                        reference = child.text
+
+            writer.writerow([contact_id, contact_name, invoice_number, reference, invoice_date, status,
+                             payment_type, subtotal, totaltax, total, amount_due, amount_credited, amount_paid])
+
+        all_invoices_csv.close()
+
+    def credit_notes_troubleshoot_append(self, xml_content):
+        root = self.parse_xml(xml_content)
+        report_name = "Masedi Electric Serve - All invoices"
+        all_invoices_csv = open(report_name + '.csv', 'a')
+        writer = csv.writer(all_invoices_csv, lineterminator='\n', delimiter='|')
+
+        credit_notes = len(root.findall(".//CreditNote"))
+        for credit_note in range(credit_notes):
+            contact_id, contact_name, invoice_date, subtotal, totaltax, total, payment_type = ["" for i in range(7)]
+            status, invoice_number, reference = ["" for i in range(3)]
+            for child in root[4][credit_note].iter():
+                if child.tag == 'ContactID':
+                    contact_id = child.text
+                elif child.tag == 'Name':
+                    contact_name = child.text
+                elif child.tag == 'Date':
+                    timestamp = datetime.strptime(child.text, '%Y-%m-%dT%H:%M:%S')
+                    if datetime(2017, 1, 1) < timestamp < datetime(2017, 10, 31):
+                        invoice_date = child.text
+                    else:
+                        continue
+                elif child.tag == 'SubTotal':
+                    subtotal = child.text
+                elif child.tag == 'TotalTax':
+                    totaltax = child.text
+                elif child.tag == 'Total':
+                    total = child.text
+                elif child.tag == 'Type':
+                    payment_type = child.text
+                elif child.tag == 'Status':
+                    status = child.text
+                elif child.tag == 'InvoiceNumber':
+                    invoice_number = child.text
+                elif child.tag == 'Reference':
+                    reference = child.text
+
+            writer.writerow([contact_id, contact_name, invoice_number, reference, invoice_date, status,
+                             payment_type, subtotal, totaltax, total])
+
+        all_invoices_csv.close()
+
+    def balances_troubleshoot_append(self, xml_content):
+        root = self.parse_xml(xml_content)
+        report_name = "Masedi Electric Serve - All invoices"
+        all_invoices_csv = open(report_name + '.csv', 'a')
+        writer = csv.writer(all_invoices_csv, lineterminator='\n', delimiter='|')
+
+        balances = len(root.findall(".//Contact"))
+        for balance in range(balances):
+            for child in root[4][balance].iter():
+                if child.tag == 'ContactID':
+                    contact_id = child.text
+                elif child.tag == 'Name':
+                    contact_name = child.text
+                elif child.tag == 'AccountsReceivable':
+                    account_receivable_title = child.tag
+                    account_receivable = child.find('Outstanding').text
+                elif child.tag == 'AccountsPayable':
+                    account_payable_title = child.tag
+                    account_payable = child.find('Outstanding').text
+
+            writer.writerow([contact_id, contact_name, '2017-01-01T00:00:00', 'Balance',
+                             account_receivable_title, account_receivable,
+                             account_payable_title, account_payable])
+
+        all_invoices_csv.close()
 
     def trial_balance_to_csv(self, xml_content):
         root = self.parse_xml(xml_content)
@@ -191,31 +313,6 @@ class XeroParser():
             writer.writerow([key, value])
 
         aged_receivables_csv.close()
-
-        """
-        root = self.parse_xml()
-        report_name = "Masedi Electric Serve - Aged_Receivables_by_Contact"
-        aged_receivables_csv = open(report_name + ".csv", 'a')
-        writer = csv.writer(aged_receivables_csv, lineterminator='\n')
-
-        contact_name = root[4][0][3][1].text
-
-        row_number = []
-        for child in root[4][0][6]:
-            row_number.append(child.tag)
-        try:
-            sumary_first_number = float(root[4][0][6][len(row_number)-1][1][0][1][4][0].text)
-            sumary_second_number = float(root[4][0][6][len(row_number)-1][1][0][1][5][0].text)
-            sumarry_aged_payables = round(sumary_first_number-sumary_second_number,2)
-            #closing_balance = float(root[4][0][6][len(row_number)-1][1][0][1][7][0].text)
-            writer.writerow([contact_name, sumarry_aged_payables])
-            #writer.writerow([contact_name,sumary_first_number])
-            #writer.writerow([contact_name,closing_balance])
-        except:
-            #writer.writerow([contact_name,0.00])
-            pass
-        aged_receivables_csv.close()
-        """
 
     def account_transactions(self, fromDate, filtered_bank_transactions, filtered_payments):
 

@@ -15,6 +15,11 @@ class XeroReportsDef():
         date_range = {'date': datetime.strptime(as_date,'%Y-%m-%d')}
         return self.xero_get_request(api_url, date_range)
 
+    def balance_sheet_as_at_date(self, as_date):
+        api_url = 'https://api.xero.com/api.xro/2.0/Reports/BalanceSheet'
+        date_range = {'date': datetime.strptime(as_date,'%Y-%m-%d')}
+        return self.xero_get_request(api_url, date_range)
+
     def profit_loss_from_to_date(self, fromDate, toDate):
         api_url = 'https://api.xero.com/api.xro/2.0/Reports/ProfitAndLoss'
         date_range = {'fromDate': fromDate, 'toDate': toDate}
@@ -35,8 +40,13 @@ class XeroReportsDef():
         date_range = {'fromDate': fromDate, 'toDate': toDate}
         return self.xero_get_request(api_url, date_range)
 
-    def get_invoices(self,contactID):
-        api_url = "https://api.xero.com/api.xro/2.0/Invoices/"
+    def get_invoices(self, contactID):
+        #api_url = "https://api.xero.com/api.xro/2.0/Invoices?ContactIDs="+contactID
+        api_url = "https://api.xero.com/api.xro/2.0/Invoices?where=Date%20%3E%3D%20DateTime%282017%2C%2001%2C%2001%29%20%26%26%20Date%20%3C%20DateTime%282017%2C%2012%2C%2031%29"
+        return self.xero_get_request(api_url)
+
+    def get_credit_notes(self):
+        api_url="https://api.xero.com/api.xro/2.0/CreditNotes"
         return self.xero_get_request(api_url)
 
 
