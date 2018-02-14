@@ -1,8 +1,9 @@
 import csv
 import xml.etree.ElementTree as ET
 from datetime import datetime
+import re
 
-class XeroParser():
+class XeroParserGET():
 
     def __init__(self, toDate=None):
         self.toDate = toDate
@@ -397,6 +398,12 @@ class XeroParser():
         account_transactions_csv.close()
 
 
+class XeroParserPOST():
 
+    def __init__(self,xml_contact_ids):
+        self.xml_contact_ids=xml_contact_ids
+
+    def post_invoices_json(self):
+        return invoices_json
 
 
