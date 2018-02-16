@@ -400,10 +400,37 @@ class XeroParserGET():
 
 class XeroParserPOST():
 
-    def __init__(self,xml_contact_ids):
-        self.xml_contact_ids=xml_contact_ids
+    def __init__(self, post_type, post_contact_id, post_date, post_invoice_number,
+                 post_reference, post_description, post_unit_amount, post_tax_amount):
+        self.post_type=post_type
+        self.post_contact_id = post_contact_id
+        self.post_date = "2017-04-01"
+        self.post_invoice_number = post_invoice_number
+        self.post_reference = post_reference
+        self.post_description = post_description
+        self.post_unit_amount = post_unit_amount
+        self.post_tax_amount = post_tax_amount
 
     def post_invoices_json(self):
-        return invoices_json
+        return  {
+                    "Invoice" : {
+                       "Type": self.post_type,
+                       "Contact": {"ContactID": self.post_contact_id},
+                       "Date": self.post_date,
+                       "InvoiceNumber" : self.post_invoice_number,
+                       "Reference": self.post_reference,
+                       "LineItems": {
+                          "LineItem": {
+                             "Description": self.post_description,
+                             "UnitAmount": self.post_unit_amount,
+                             "TaxAmount": self.post_tax_amount,
+                          }
+                       }
+                    }
+                }
+
+
+
+
 
 

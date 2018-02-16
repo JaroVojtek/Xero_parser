@@ -3,8 +3,7 @@ from xero_parser import XeroParserGET, XeroParserPOST
 from xero import Xero
 from xero.auth import PrivateCredentials
 import calendar
-import datetime
-import json
+from openpyxl import load_workbook
 
 class XeroConnect():
 
@@ -34,6 +33,7 @@ if __name__ == "__main__":
     connector = XeroConnect()
     authenticate = connector.connect_to_xero()
     xero = Xero(authenticate)
+    xero_requests = XeroRequestsDef(authenticate)
 
     if option == "get":
         try:
@@ -66,8 +66,6 @@ if __name__ == "__main__":
         report_gen.income_by_contact_to_csv(filtered_invoices)
         report_gen.account_transactions(fromDate, filtered_bank_transactions,filtered_payments)
 
-        xero_requests = XeroRequestsDef(authenticate)
-
         xml_invoices = xero_requests.get_invoices()
         #print(type(xml_invoices))
         report_gen.invoices_csv_troubleshoot(xml_invoices)
@@ -94,24 +92,62 @@ if __name__ == "__main__":
         report_gen.profit_and_loss_to_csv(xml_profit_loss)
 
     else:
-        print("nothing at the moment")
-        """
         #-----------------POSTS------------------------------------
-        type="ACCPAY"
+        file_name = input("Please provide a csv file name, containing data to upload: ")
+        workbook = load_workbook(file_name, data_only=True)
+        sheet = workbook.active
+        rows = sheet.rows
+        offset = 1
         contact_id_list = xero.contacts.all()
-        
+
+        for i, row in enumerate(rows):
+            if i < offset:
+                continue
+            invoices_list = [cell.value for cell in row]
+
+            post_type="ACCPAY"
+
+            for contact in contact_id_list:
+                if contact['Name']==invoices_list[0]:
+                    post_contact_id = contact['ContactID']
+            post_date=invoices_list[1]
+            post_invoice_number=invoices_list[2]
+            post_reference = invoices_list[3]
+            post_description = invoices_list[4]
+            post_unit_amount = invoices_list[5]
+            post_tax_amount = invoices_list[6]
+
+            post_gen = XeroParserPOST(post_type, post_contact_id, post_date, post_invoice_number,
+                                      post_reference, post_description,
+                                      post_unit_amount, post_tax_amount)
+
+            invoices_json = post_gen.post_invoices_json()
+            print(invoices_json)
+            input()
+            #xml_post_invoices = xero_requests.post_invoices(invoices_json)
+            #print(xml_post_invoices.status_code)
+            #print(xml_post_invoices.text)
+
+    """
         for contact in contact_id_list:
-            if contact['Name']=='JDL Electric':
-                contact_ID = contact['ContactID']
-        invoice_date='1.4.2017'
-        invoice_number='INA12084'
+            if contact['Name'] == 'JDL Electric':
+                post_contact_id = contact['ContactID']
+        post_date = '1.4.2017'
+        post_invoice_number = 'INV03419'
+        post_reference = 'Johannesburg'
+        post_description = 'Material'
+        post_unit_amount = '1832,32'
+        post_tax_amount = '225,0218'
+        
+        post_gen = XeroParserPOST(post_type, post_contact_id, post_date, post_invoice_number,
+                                  post_reference, post_description,
+                                  post_unit_amount, post_tax_amount)
     
-        post_gen = XeroParserPOST()
-        invoices_json = post_gen.post_invoices_json(xml_contact_ids)
-        xero_requests.post_invoices(invoices_json)
-        """
-
-
-
-
+        invoices_json = post_gen.post_invoices_json()
+        print(invoices_json)
+        input()
+        #xml_post_invoices = xero_requests.post_invoices(invoices_json)
+        #print(xml_post_invoices.status_code)
+        #print(xml_post_invoices.text)
+    """
 

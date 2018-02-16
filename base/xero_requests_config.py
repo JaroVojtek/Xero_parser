@@ -48,7 +48,7 @@ class XeroRequestsDef():
         api_url="https://api.xero.com/api.xro/2.0/CreditNotes"
         return self.xero_get_request(api_url)
 
-    def post_invoices(self,json_data):
+    def post_invoices(self, json_data):
         api_url="https://api.xero.com/api.xro/2.0/Invoices"
         headers = {'Content-Type': 'application/json'}
         post_request = requests.post(api_url, data=json_data, headers=headers, auth=self.authenticate.oauth )
