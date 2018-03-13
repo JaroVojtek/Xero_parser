@@ -1,7 +1,6 @@
 import csv
 import xml.etree.ElementTree as ET
 from datetime import datetime
-import re
 
 class XeroParserGET():
 
@@ -398,38 +397,43 @@ class XeroParserGET():
         account_transactions_csv.close()
 
 
-class XeroParserPOST():
+class XeroParserPUT():
 
-    def __init__(self, post_type, post_contact_id, post_date, post_invoice_number,
-                 post_reference, post_description, post_unit_amount, post_tax_amount):
-        self.post_type=post_type
-        self.post_contact_id = post_contact_id
-        self.post_date = "2017-04-01"
-        self.post_invoice_number = post_invoice_number
-        self.post_reference = post_reference
-        self.post_description = post_description
-        self.post_unit_amount = post_unit_amount
-        self.post_tax_amount = post_tax_amount
+    def __init__(self, put_type, put_contact_id, put_date, put_invoice_number,
+                 put_reference, put_description, put_unit_amount, put_tax_amount):
+        self.put_type=put_type
+        self.put_contact_id = put_contact_id
+        self.put_date = put_date.strftime('%Y-%m-%d')
+        self.put_invoice_number = put_invoice_number
+        self.put_reference = put_reference
+        self.put_description = put_description
+        self.put_unit_amount = put_unit_amount
+        self.put_tax_amount = put_tax_amount
 
-    def post_invoices_json(self):
-        return  {
-                    "Invoice" : {
-                       "Type": self.post_type,
-                       "Contact": {"ContactID": self.post_contact_id},
-                       "Date": self.post_date,
-                       "InvoiceNumber" : self.post_invoice_number,
-                       "Reference": self.post_reference,
-                       "LineItems": {
-                          "LineItem": {
-                             "Description": self.post_description,
-                             "UnitAmount": self.post_unit_amount,
-                             "TaxAmount": self.post_tax_amount,
-                          }
-                       }
-                    }
-                }
+    def put_invoices_xml(self):
+        return """<Invoice>
+<Type>{0}</Type>
+<Contact>
+ <ContactID>{1}</ContactID>
+</Contact>
+<InvoiceNumber>{2}</InvoiceNumber>
+<Reference>{3}</Reference>
+<Date>{4}</Date>
+<LineItems>
+ <LineItem>
+  <Description>{5}</Description>
+  <UnitAmount>{6}</UnitAmount>
+  <TaxAmount>{7}</TaxAmount>
+ </LineItem>
+</LineItems>
+</Invoice>""".format(self.put_type, self.put_contact_id, self.put_invoice_number,
+                     self.put_reference, self.put_date, self.put_description,
+                     self.put_unit_amount, self.put_tax_amount)
 
-
+def put_contacts_xml(xml_contacts):
+    root = ET.fromstring(xml_contacts)
+    list_of_contacts = [ET.tostring(child).decode() for child in root[4].iter('Contact')]
+    return list_of_contacts
 
 
 

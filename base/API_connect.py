@@ -1,14 +1,18 @@
 from xero_requests_config import XeroRequestsDef
-from xero_parser import XeroParserGET, XeroParserPOST
+from xero_parser import XeroParserGET, XeroParserPUT, put_contacts_xml
 from xero import Xero
 from xero.auth import PrivateCredentials
 import calendar
+import re
+import time
 from openpyxl import load_workbook
+import datetime
 
 class XeroConnect():
 
     def __init__(self):
-        self.consumer_key = 'MZ5BV2CY28XCI3JHHA7ADUFHOGKVMM'
+        #self.consumer_key = 'MZ5BV2CY28XCI3JHHA7ADUFHOGKVMM' #Masendi company
+        self.consumer_key = 'ZDG10NLLJ8LMVN4BKQ9L5TK6XZ6IBN' #TopApp
         self.private_key_file = 'privatekey.pem'
 
     def return_private_key(self):
@@ -67,8 +71,7 @@ if __name__ == "__main__":
         report_gen.account_transactions(fromDate, filtered_bank_transactions,filtered_payments)
 
         xml_invoices = xero_requests.get_invoices()
-        #print(type(xml_invoices))
-        report_gen.invoices_csv_troubleshoot(xml_invoices)
+        #report_gen.invoices_csv_troubleshoot(xml_invoices)
 
         #with open('all_invoices_xml','w') as f:
         #    f.write(xml_invoices)
@@ -79,7 +82,8 @@ if __name__ == "__main__":
         report_gen.credit_notes_troubleshoot_append(xml_credit_notes)
 
         xml_contact_ids = xero_requests.contact_ids()
-        #print(xml_contact_ids)
+        with open('contact_ids.txt', 'w') as f:
+            f.write(xml_contact_ids)
         #report_gen.balances_troubleshoot_append(xml_contact_ids)
 
         xml_trial_balance = xero_requests.trial_balance_as_at_date(toDate)
@@ -92,7 +96,8 @@ if __name__ == "__main__":
         report_gen.profit_and_loss_to_csv(xml_profit_loss)
 
     else:
-        #-----------------POSTS------------------------------------
+        #-----------------PUT INVOICES API------------------------------------
+        """
         file_name = input("Please provide a csv file name, containing data to upload: ")
         workbook = load_workbook(file_name, data_only=True)
         sheet = workbook.active
@@ -105,49 +110,39 @@ if __name__ == "__main__":
                 continue
             invoices_list = [cell.value for cell in row]
 
-            post_type="ACCPAY"
+            put_type= "ACCPAY"
 
             for contact in contact_id_list:
                 if contact['Name']==invoices_list[0]:
-                    post_contact_id = contact['ContactID']
-            post_date=invoices_list[1]
-            post_invoice_number=invoices_list[2]
-            post_reference = invoices_list[3]
-            post_description = invoices_list[4]
-            post_unit_amount = invoices_list[5]
-            post_tax_amount = invoices_list[6]
+                    put_contact_id = contact['ContactID']
+                    print(put_contact_id)
+            put_date=invoices_list[1]
+            put_invoice_number=invoices_list[2]
+            put_reference = invoices_list[3]
+            put_description = invoices_list[4]
+            put_unit_amount = invoices_list[5]
+            put_tax_amount = invoices_list[6]
 
-            post_gen = XeroParserPOST(post_type, post_contact_id, post_date, post_invoice_number,
-                                      post_reference, post_description,
-                                      post_unit_amount, post_tax_amount)
+            put_gen = XeroParserPUT(put_type, put_contact_id, put_date, put_invoice_number,
+                                    put_reference, put_description,
+                                    put_unit_amount, put_tax_amount)
 
-            invoices_json = post_gen.post_invoices_json()
-            print(invoices_json)
-            input()
-            #xml_post_invoices = xero_requests.post_invoices(invoices_json)
-            #print(xml_post_invoices.status_code)
-            #print(xml_post_invoices.text)
+            invoices_xml = put_gen.put_invoices_xml()
+            xml_put_invoices = xero_requests.put_invoices(invoices_xml)
+            print(xml_put_invoices.status_code)
+            print(xml_put_invoices.text)
+            time.sleep(2)
+            #break
+        """
+        #---------------------------Contacts Importing---------------------------
+        with open('unimported_contacts.txt', 'r') as f:
+            xml_contact = f.read()
+        list_of_contacts = put_contacts_xml(xml_contact)
+        for c in list_of_contacts:
+            time.sleep(3)
+            company_name = re.search('<Name>(.*)</Name>',c)
+            xml_put_contacts = xero_requests.put_contacts(c)
+            print(company_name.group(1)+": "+str(xml_put_contacts.status_code))
+        #------------------------------------------------------------------------
 
-    """
-        for contact in contact_id_list:
-            if contact['Name'] == 'JDL Electric':
-                post_contact_id = contact['ContactID']
-        post_date = '1.4.2017'
-        post_invoice_number = 'INV03419'
-        post_reference = 'Johannesburg'
-        post_description = 'Material'
-        post_unit_amount = '1832,32'
-        post_tax_amount = '225,0218'
-        
-        post_gen = XeroParserPOST(post_type, post_contact_id, post_date, post_invoice_number,
-                                  post_reference, post_description,
-                                  post_unit_amount, post_tax_amount)
-    
-        invoices_json = post_gen.post_invoices_json()
-        print(invoices_json)
-        input()
-        #xml_post_invoices = xero_requests.post_invoices(invoices_json)
-        #print(xml_post_invoices.status_code)
-        #print(xml_post_invoices.text)
-    """
 
